@@ -155,9 +155,9 @@ export const content: Record<Language, SiteContent> = {
       hint: "Faites défiler ou choisissez directement une destination sur le globe.",
     },
     about: {
-      eyebrow: "À propos / Notre rôle",
-      title: "Un relais concret entre",
-      accent: "deux marchés.",
+      eyebrow: "Qui sommes-nous ?",
+      title: "TURKANOR",
+      accent: "Corporation",
       body: [
         "TURKANOR CORPORATION facilite les échanges commerciaux et les partenariats entre la Türkiye, l’Afrique et les marchés internationaux.",
         "Nous accompagnons entreprises, entrepreneurs, investisseurs et professionnels dans leurs projets internationaux, avec un interlocuteur direct et un suivi de terrain.",
@@ -258,7 +258,7 @@ export const content: Record<Language, SiteContent> = {
       hint: "Scroll or choose a destination directly on the globe.",
     },
     about: {
-      eyebrow: "About / Our role", title: "A practical bridge between", accent: "two markets.",
+      eyebrow: "Who we are", title: "TURKANOR", accent: "Corporation",
       body: ["TURKANOR CORPORATION facilitates trade and partnerships between Türkiye, Africa and international markets.", "We support companies, entrepreneurs, investors and professionals in their international projects through direct contact and on-the-ground follow-up."],
       mission: ["Our ambition", "Build an international network progressively linking African markets to Türkiye’s commercial and industrial capabilities."],
       vision: ["Two markets", "Connect African importers, distributors, entrepreneurs and investors with Turkish manufacturers, suppliers and industrial companies."],
@@ -301,7 +301,7 @@ export const content: Record<Language, SiteContent> = {
       hint: "Kaydırın veya küre üzerindeki bir hedefi doğrudan seçin.",
     },
     about: {
-      eyebrow: "Hakkımızda / Rolümüz", title: "İki pazar arasında", accent: "somut bir köprü.",
+      eyebrow: "Biz kimiz?", title: "TURKANOR", accent: "Corporation",
       body: ["TURKANOR CORPORATION; Türkiye, Afrika ve uluslararası pazarlar arasındaki ticareti ve ortaklıkları kolaylaştırır.", "Şirketlere, girişimcilere, yatırımcılara ve profesyonellere doğrudan iletişim ve saha takibiyle uluslararası projelerinde eşlik ederiz."],
       mission: ["Hedefimiz", "Afrika pazarlarını Türkiye’nin ticari ve endüstriyel kapasitesiyle kademeli olarak buluşturan uluslararası bir ağ kurmak."],
       vision: ["İki pazar", "Afrikalı ithalatçıları, distribütörleri, girişimcileri ve yatırımcıları Türk üretici, tedarikçi ve sanayicileriyle buluşturmak."],
