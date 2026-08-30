@@ -1,18 +1,29 @@
-# Welcome to React Router!
+# TURKANOR Corporation
 
-A modern, production-ready template for building full-stack React applications using React Router.
+Premium, single-page corporate website for TURKANOR Corporation—an operational
+bridge for sourcing, trade, business development, travel, education and medical
+services between Türkiye, Africa and the rest of the world.
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/remix-run/react-router-templates/tree/main/default)
+## Experience
 
-## Features
+- Editorial, responsive visual system built specifically for TURKANOR
+- Ten-service scroll journey with a persistent desktop index
+- Interactive 3D Türkiye-to-West-Africa globe
+- GSAP scroll reveals and Lenis smooth scrolling
+- Accessible reduced-motion mode, keyboard focus treatment and mobile navigation
+- Server-rendered and prerendered French, English and Turkish content with structured organization data
+- Direct WhatsApp, telephone and email conversion paths
+- Optimized WebP imagery and responsive performance safeguards
 
-- 🚀 Server-side rendering
-- ⚡️ Hot Module Replacement (HMR)
-- 📦 Asset bundling and optimization
-- 🔄 Data loading and mutations
-- 🔒 TypeScript by default
-- 🎉 TailwindCSS for styling
-- 📖 [React Router docs](https://reactrouter.com/)
+## Stack
+
+- React 19
+- React Router 8 with SSR and prerendering
+- TypeScript
+- GSAP + ScrollTrigger
+- Lenis
+- Three.js / React Three Fiber / Drei
+- Vite 8
 
 ## Getting Started
 
@@ -32,7 +43,7 @@ Start the development server with HMR:
 npm run dev
 ```
 
-Your application will be available at `http://localhost:5173`.
+The local development URL is printed by React Router after startup.
 
 ## Building for Production
 
@@ -44,27 +55,51 @@ npm run build
 
 ## Deployment
 
-### Docker Deployment
+## Quality checks
+
+```bash
+npm run typecheck
+npm run build
+```
+
+## Docker deployment
 
 To build and run using Docker:
 
 ```bash
-docker build -t my-app .
+docker build -t turkanor-corporation .
 
 # Run the container
-docker run -p 3000:3000 my-app
+docker run -p 3000:3000 turkanor-corporation
 ```
 
-The containerized application can be deployed to any platform that supports Docker, including:
+## Netlify deployment
 
-- AWS ECS
-- Google Cloud Run
-- Azure Container Apps
-- Digital Ocean App Platform
-- Fly.io
-- Railway
+The project includes Netlify's official React Router runtime adapter and a
+checked-in `netlify.toml`. Netlify will use:
 
-### DIY Deployment
+- Build command: `npm run build`
+- Publish directory: `build/client`
+- Runtime: Node.js 24
+- Rendering: prerendered `/`, `/en` and `/tr` pages, with SSR available for future routes
+
+Connect the Git repository in Netlify and accept the settings detected from
+`netlify.toml`. Do not add an SPA catch-all redirect: the React Router adapter
+generates the correct server handler automatically.
+
+The Netlify Vite integration is active during normal local development:
+
+```bash
+npm run dev
+```
+
+No environment variables are currently required. Run `npm run verify` before
+pushing a deployment.
+
+Before the first production deploy, set the final domain in the SEO metadata so
+the canonical URL, social preview image URL and sitemap can be absolute.
+
+## Node deployment
 
 If you're familiar with deploying Node applications, the built-in app server is production-ready.
 
@@ -78,10 +113,5 @@ Make sure to deploy the output of `npm run build`
 │   └── server/    # Server-side code
 ```
 
-## Styling
-
-This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever CSS framework you prefer.
-
----
-
-Built with ❤️ using React Router.
+The project is intentionally structured so the landing page can later grow into
+dedicated service pages, multilingual routes, lead forms, a CMS or a client portal.
