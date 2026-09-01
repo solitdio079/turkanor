@@ -11,12 +11,8 @@ export function SiteHeader({ language }: { language: Language }) {
   const mobileNavigation = useRef<HTMLElement>(null);
   const copy = content[language];
   const links = [
-    [copy.navigation.home, "#accueil"],
     [copy.navigation.about, "#a-propos"],
     [copy.navigation.services, "#services"],
-    [copy.navigation.sectors, "#secteurs"],
-    [copy.navigation.sourcing, "#sourcing"],
-    [copy.navigation.turkiye, "#turkiye"],
     [copy.navigation.bridge, "#pont"],
     [copy.navigation.contact, "#contact"],
   ] as const;
@@ -67,7 +63,7 @@ export function SiteHeader({ language }: { language: Language }) {
   }, [open]);
 
   return (
-    <header className={`site-header ${scrolled ? "is-scrolled" : ""}`}>
+    <header className={`site-header ${scrolled ? "is-scrolled" : ""} ${open ? "menu-open" : ""}`}>
       <a href="#accueil" className="brand" aria-label="TURKANOR Corporation">
         <span className="brand-mark"><img src="/images/turkanor-logo.webp" width="320" height="320" alt="" /></span>
         <span><strong>TURKANOR</strong><small>CORPORATION</small></span>

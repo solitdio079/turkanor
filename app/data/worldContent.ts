@@ -90,7 +90,7 @@ const fr: SiteContent = {
   navigation: {
     home: "Accueil", about: "Qui sommes-nous ?", services: "Nos solutions", sectors: "Nos secteurs",
     sourcing: "Sourcing & Import-Export", turkiye: "Services en Türkiye", bridge: "Türkiye - Afrique",
-    contact: "Contact", project: "Vous avez un projet ?", menu: "Sommaire",
+    contact: "Contact", project: "Vous avez un projet ?", menu: "Menu",
   },
   interface: {
     next: "Page suivante", choosePoint: "Parcourir le catalogue", network: "Türkiye · Afrique · International",
@@ -202,7 +202,7 @@ const en: SiteContent = {
   navigation: {
     home: "Home", about: "Who we are", services: "Our solutions", sectors: "Our sectors",
     sourcing: "Sourcing & Import-Export", turkiye: "Services in Türkiye", bridge: "Türkiye - Africa",
-    contact: "Contact", project: "Have a project?", menu: "Contents",
+    contact: "Contact", project: "Have a project?", menu: "Menu",
   },
   interface: {
     next: "Next page", choosePoint: "Browse the catalogue", network: "Türkiye · Africa · International",
@@ -308,7 +308,7 @@ const tr: SiteContent = {
   navigation: {
     home: "Ana sayfa", about: "Biz kimiz?", services: "Çözümlerimiz", sectors: "Sektörlerimiz",
     sourcing: "Tedarik & İthalat-İhracat", turkiye: "Türkiye'de Hizmetler", bridge: "Türkiye - Afrika",
-    contact: "İletişim", project: "Projeniz mi var?", menu: "İçindekiler",
+    contact: "İletişim", project: "Projeniz mi var?", menu: "Menü",
   },
   interface: {
     next: "Sonraki sayfa", choosePoint: "Kataloğu inceleyin", network: "Türkiye · Afrika · Uluslararası",
@@ -414,13 +414,13 @@ const chapterLocations: Array<Omit<GlobeDestination, "label">> = [
   { id: "accueil", number: "00", location: { city: "İstanbul", country: "Türkiye", code: "IST", lat: 41.008, lon: 28.978 } },
   { id: "a-propos", number: "02", location: { city: "Conakry", country: "Guinée", code: "CKY", lat: 9.641, lon: -13.578 } },
   { id: "direction", number: "03", location: { city: "İstanbul", country: "Türkiye", code: "IST", lat: 41.008, lon: 28.978 } },
-  { id: "services", number: "04", location: { city: "Bursa", country: "Türkiye", code: "BRS", lat: 40.195, lon: 29.06 } },
-  { id: "services-suite", number: "05", location: { city: "Dakar", country: "Sénégal", code: "DKR", lat: 14.716, lon: -17.467 } },
-  { id: "secteurs", number: "06", location: { city: "Gaziantep", country: "Türkiye", code: "GZT", lat: 37.066, lon: 37.383 } },
+  { id: "services", number: "04", location: { city: "Abidjan", country: "Côte d'Ivoire", code: "ABJ", lat: 5.36, lon: -4.008 } },
+  { id: "services-suite", number: "05", location: { city: "Bursa", country: "Türkiye", code: "BRS", lat: 40.195, lon: 29.06 } },
+  { id: "secteurs", number: "06", location: { city: "Bamako", country: "Mali", code: "BKO", lat: 12.639, lon: -8.003 } },
   { id: "sourcing", number: "07", location: { city: "Mersin", country: "Türkiye", code: "MER", lat: 36.812, lon: 34.641 } },
-  { id: "sourcing-suite", number: "08", location: { city: "Abidjan", country: "Côte d'Ivoire", code: "ABJ", lat: 5.36, lon: -4.008 } },
-  { id: "turkiye", number: "09", location: { city: "Konya", country: "Türkiye", code: "KON", lat: 37.874, lon: 32.493 } },
-  { id: "pont", number: "10", location: { city: "Bamako", country: "Mali", code: "BKO", lat: 12.639, lon: -8.003 } },
+  { id: "sourcing-suite", number: "08", location: { city: "Conakry", country: "Guinée", code: "CKY", lat: 9.641, lon: -13.578 } },
+  { id: "turkiye", number: "09", location: { city: "İstanbul", country: "Türkiye", code: "IST", lat: 41.008, lon: 28.978 } },
+  { id: "pont", number: "10", location: { city: "Abidjan", country: "Côte d'Ivoire", code: "ABJ", lat: 5.36, lon: -4.008 } },
   { id: "ensemble", number: "11", location: { city: "İstanbul", country: "Türkiye", code: "IST", lat: 41.008, lon: 28.978 } },
   { id: "contact", number: "12", location: { city: "Conakry", country: "Guinée", code: "CKY", lat: 9.641, lon: -13.578 } },
 ];

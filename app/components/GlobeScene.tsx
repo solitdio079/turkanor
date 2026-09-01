@@ -1,7 +1,9 @@
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Line, Stars } from "@react-three/drei";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { feature } from "topojson-client";
 import * as THREE from "three";
+import worldAtlas from "world-atlas/countries-110m.json";
 import type { GlobeDestination } from "~/data/worldContent";
 
 type GlobeSceneProps = {
@@ -16,79 +18,18 @@ type GlobeSceneProps = {
   destinations: GlobeDestination[];
 };
 
-type Coordinate = readonly [longitude: number, latitude: number];
+type Coordinate = [longitude: number, latitude: number];
+type PolygonGeometry = { type: "Polygon"; coordinates: Coordinate[][] };
+type MultiPolygonGeometry = { type: "MultiPolygon"; coordinates: Coordinate[][][] };
+type CountryFeature = {
+  id?: string | number;
+  properties?: { name?: string };
+  geometry: PolygonGeometry | MultiPolygonGeometry | null;
+};
+type CountryCollection = { type: "FeatureCollection"; features: CountryFeature[] };
 
-const locations = [
-  { lat: 41.01, lon: 28.97, color: "#fffdf6" },
-  { lat: 12.64, lon: -8.0, color: "#d9d1bc" },
-  { lat: 9.51, lon: -13.71, color: "#d9d1bc" },
-  { lat: 5.36, lon: -4.0, color: "#d9d1bc" },
-  { lat: 14.72, lon: -17.47, color: "#d9d1bc" },
-] as const;
-
-/*
- * Hand-shaped, deliberately simplified continent silhouettes. Keeping the map
- * in code makes the hero independent from third-party texture CDNs, while the
- * irregular coastlines give the globe a recognisable, editorial character.
- */
-const continents: Coordinate[][] = [
-  // North America
-  [
-    [-168, 69], [-150, 72], [-134, 58], [-126, 52], [-123, 39], [-113, 31],
-    [-105, 23], [-96, 18], [-89, 20], [-83, 26], [-80, 31], [-75, 38],
-    [-66, 45], [-58, 52], [-64, 61], [-82, 67], [-102, 72], [-125, 72],
-    [-145, 63], [-168, 69],
-  ],
-  // Greenland
-  [
-    [-72, 59], [-48, 60], [-22, 72], [-28, 82], [-52, 85], [-68, 77],
-    [-72, 59],
-  ],
-  // South America
-  [
-    [-81, 12], [-69, 10], [-59, 6], [-50, 0], [-35, -7], [-39, -20],
-    [-49, -29], [-55, -42], [-66, -56], [-73, -50], [-72, -34], [-78, -18],
-    [-81, -4], [-81, 12],
-  ],
-  // Europe and Asia
-  [
-    [-10, 36], [-9, 49], [-2, 58], [12, 63], [25, 70], [45, 73], [64, 70],
-    [82, 74], [110, 70], [138, 59], [162, 61], [177, 51], [162, 44],
-    [148, 38], [141, 25], [125, 18], [113, 4], [100, 2], [91, 9], [80, 8],
-    [73, 20], [62, 24], [56, 31], [45, 30], [36, 40], [28, 41], [20, 35],
-    [12, 39], [3, 43], [-10, 36],
-  ],
-  // Africa
-  [
-    [-17, 36], [-5, 37], [10, 36], [23, 32], [34, 30], [43, 13], [51, 11],
-    [43, -2], [40, -16], [32, -27], [18, -35], [10, -30], [4, -19],
-    [-6, -5], [-12, 5], [-17, 18], [-17, 36],
-  ],
-  // Madagascar
-  [[47, -13], [51, -17], [49, -27], [44, -24], [47, -13]],
-  // Australia
-  [
-    [112, -11], [129, -12], [143, -10], [153, -25], [147, -39], [132, -43],
-    [116, -35], [112, -22], [112, -11],
-  ],
-  // Japan
-  [[130, 33], [136, 36], [142, 44], [146, 43], [141, 34], [130, 33]],
-];
-
-const AFRICA_INDEX = 4;
-
-const countryHighlights = [
-  {
-    name: "TR",
-    color: "#d8c58d",
-    polygon: [
-      [26.0, 40.7], [29.2, 41.3], [32.2, 41.1], [35.0, 42.0],
-      [38.2, 41.1], [41.2, 41.2], [44.6, 39.8], [44.0, 37.3],
-      [40.2, 37.0], [36.8, 36.7], [33.4, 36.0], [30.6, 36.6],
-      [28.2, 37.5], [26.0, 40.7],
-    ] as Coordinate[],
-  },
-] as const;
+const FEATURED_COUNTRIES = new Set(["792", "324", "384", "466"]);
+const TURKIYE_ID = "792";
 
 function clamp01(value: number) {
   return Math.min(1, Math.max(0, value));
@@ -99,38 +40,27 @@ function smoothstep(value: number) {
   return t * t * (3 - 2 * t);
 }
 
-function getJourneyView(progress: number, lowPower: boolean) {
+function getJourneyView(progress: number, lowPower: boolean, stageCount: number) {
   const p = clamp01(progress);
-  const entrance = smoothstep(p / 0.16);
-  const departure = smoothstep((p - 0.88) / 0.12);
-  const orbit = smoothstep(p);
-  const turns = lowPower ? 1.05 : 1.35;
-  const angle = orbit * Math.PI * 2 * turns;
-  const surfacePass = lowPower
-    ? 3.55 + Math.sin(p * Math.PI * 5 + 0.4) * 0.12
-    : 2.68 + Math.sin(p * Math.PI * 5 + 0.4) * 0.2;
-  const approachRadius = THREE.MathUtils.lerp(lowPower ? 6.05 : 5.7, surfacePass, entrance);
-  const radius = THREE.MathUtils.lerp(approachRadius, lowPower ? 5.3 : 4.7, departure);
-  const height = (lowPower ? 0.3 : 0.62) * Math.sin(angle * 0.72) + (lowPower ? 0.12 : 0.08);
-  const closeScale = lowPower ? 1 : 1.12;
-  const scale = THREE.MathUtils.lerp(
-    THREE.MathUtils.lerp(lowPower ? 0.88 : 0.9, closeScale, entrance),
-    lowPower ? 0.9 : 0.94,
-    departure,
-  );
-  const closeFov = lowPower ? 45 : 38;
-  const fov = THREE.MathUtils.lerp(
-    THREE.MathUtils.lerp(lowPower ? 48 : 44, closeFov, entrance),
-    lowPower ? 46 : 42,
-    departure,
-  );
+  const stagePosition = p * Math.max(1, stageCount - 1);
+  const stageFraction = stagePosition - Math.floor(stagePosition);
+  const travel = Math.pow(Math.max(0, Math.sin(stageFraction * Math.PI)), 0.72);
+  const segment = Math.min(Math.max(0, Math.floor(stagePosition)), Math.max(0, stageCount - 2));
+  const side = segment % 2 === 0 ? 1 : -1;
+  const locationRadius = lowPower ? 4.05 : 3.25;
+  const travelRadius = lowPower ? 5.85 : 5.55;
+  const radius = THREE.MathUtils.lerp(locationRadius, travelRadius, travel);
+  const angle = stagePosition * Math.PI * 2;
+  const scale = THREE.MathUtils.lerp(lowPower ? 1 : 1.08, lowPower ? 0.92 : 0.94, travel);
+  const fov = THREE.MathUtils.lerp(lowPower ? 48 : 37, lowPower ? 51 : 44, travel);
 
   return {
     angle,
     fov,
-    x: Math.sin(angle) * radius,
-    y: height,
-    z: Math.cos(angle) * radius,
+    travel,
+    x: side * travel * (lowPower ? 0.24 : 0.54),
+    y: (lowPower ? 0.08 : 0.12) + travel * (lowPower ? 0.18 : 0.38) * Math.sin((segment + 0.5) * 1.7),
+    z: radius,
     scale,
   };
 }
@@ -162,20 +92,24 @@ function pointOnSphere(lat: number, lon: number, radius = 1.57) {
   );
 }
 
-function drawPolygon(
-  context: CanvasRenderingContext2D,
-  polygon: Coordinate[],
-  width: number,
-  height: number,
-) {
-  context.beginPath();
-  polygon.forEach(([longitude, latitude], index) => {
+function traceRing(context: CanvasRenderingContext2D, ring: Coordinate[], width: number, height: number) {
+  let previousX: number | undefined;
+  ring.forEach(([longitude, latitude], index) => {
     const x = ((longitude + 180) / 360) * width;
     const y = ((90 - latitude) / 180) * height;
-    if (index === 0) context.moveTo(x, y);
+    if (index === 0 || previousX === undefined || Math.abs(x - previousX) > width * 0.45) context.moveTo(x, y);
     else context.lineTo(x, y);
+    previousX = x;
   });
-  context.closePath();
+}
+
+function traceCountry(context: CanvasRenderingContext2D, country: CountryFeature, width: number, height: number) {
+  if (!country.geometry) return;
+  const polygons = country.geometry.type === "Polygon"
+    ? [country.geometry.coordinates]
+    : country.geometry.coordinates;
+  context.beginPath();
+  polygons.forEach((polygon) => polygon.forEach((ring) => traceRing(context, ring, width, height)));
 }
 
 function createEarthTexture(lowPower: boolean) {
@@ -186,90 +120,47 @@ function createEarthTexture(lowPower: boolean) {
   if (!context) return null;
 
   const { width, height } = canvas;
-  const ocean = context.createLinearGradient(0, 0, width, height);
-  ocean.addColorStop(0, "#03261d");
-  ocean.addColorStop(0.5, "#064b37");
-  ocean.addColorStop(1, "#021d17");
+  const ocean = context.createRadialGradient(width * 0.34, height * 0.28, 0, width * 0.48, height * 0.55, width * 0.78);
+  ocean.addColorStop(0, "#126b64");
+  ocean.addColorStop(0.48, "#06463e");
+  ocean.addColorStop(1, "#011b1b");
   context.fillStyle = ocean;
   context.fillRect(0, 0, width, height);
 
-  // Navigation-grid lines are printed into the texture rather than floating
-  // above it; this keeps the globe crisp on lower-powered phones.
-  context.strokeStyle = "rgba(203, 222, 211, 0.11)";
-  context.lineWidth = Math.max(1, width / 1500);
-  for (let lon = -150; lon <= 150; lon += 30) {
-    const x = ((lon + 180) / 360) * width;
-    context.beginPath();
-    context.moveTo(x, 0);
-    context.lineTo(x, height);
-    context.stroke();
-  }
-  for (let lat = -60; lat <= 60; lat += 30) {
-    const y = ((90 - lat) / 180) * height;
-    context.beginPath();
-    context.moveTo(0, y);
-    context.lineTo(width, y);
-    context.stroke();
-  }
-
-  continents.forEach((continent, index) => {
-    drawPolygon(context, continent, width, height);
-    const land = context.createLinearGradient(0, 0, width, height);
-    if (index === AFRICA_INDEX) {
-      land.addColorStop(0, "#8bd0aa");
-      land.addColorStop(1, "#287957");
-    } else {
-      land.addColorStop(0, "#e6e9e3");
-      land.addColorStop(1, "#8ca99a");
+  // Natural Earth country geometry from world-atlas replaces the former
+  // illustrative silhouettes. The texture stays local and works offline.
+  const topology = worldAtlas as unknown as { objects: { countries: unknown } };
+  const countries = feature(topology, topology.objects.countries) as CountryCollection;
+  countries.features.forEach((country) => {
+    const id = String(country.id ?? "");
+    const numericId = Number.parseInt(id, 10) || 0;
+    const featured = FEATURED_COUNTRIES.has(id);
+    traceCountry(context, country, width, height);
+    const lightness = 48 + (numericId % 6) * 2.2;
+    context.fillStyle = id === TURKIYE_ID
+      ? "#d6c28c"
+      : featured
+        ? "#82b986"
+        : `hsl(${139 + (numericId % 9)}, ${22 + (numericId % 7)}%, ${lightness}%)`;
+    if (featured) {
+      context.shadowColor = id === TURKIYE_ID ? "rgba(232,210,148,.9)" : "rgba(136,207,151,.72)";
+      context.shadowBlur = width / 420;
     }
-    context.fillStyle = land;
-    context.fill();
-    context.strokeStyle = index === AFRICA_INDEX ? "#f5eee0" : "rgba(255,255,255,.55)";
-    context.lineWidth = Math.max(1.2, width / 1200);
-    context.stroke();
-  });
-
-  // Türkiye is painted as a country—not a generic map pin—while Africa is
-  // already treated as the globe's contrasting green anchor landmass.
-  countryHighlights.forEach(({ name, color, polygon }) => {
-    context.save();
-    drawPolygon(context, polygon, width, height);
-    context.fillStyle = color;
-    context.shadowColor = color;
-    context.shadowBlur = width / 175;
-    context.fill();
+    context.fill("evenodd");
     context.shadowBlur = 0;
-    context.strokeStyle = "rgba(255,253,246,.96)";
-    context.lineWidth = Math.max(2, width / 720);
+    context.strokeStyle = featured ? "rgba(255,250,231,.9)" : "rgba(226,239,229,.42)";
+    context.lineWidth = featured ? Math.max(1.6, width / 1050) : Math.max(0.55, width / 3100);
     context.stroke();
-
-    const center = polygon.reduce(
-      (sum, [longitude, latitude]) => ({
-        x: sum.x + ((longitude + 180) / 360) * width,
-        y: sum.y + ((90 - latitude) / 180) * height,
-      }),
-      { x: 0, y: 0 },
-    );
-    center.x /= polygon.length;
-    center.y /= polygon.length;
-    context.fillStyle = "#06251d";
-    context.font = `800 ${Math.max(12, width / 110)}px Manrope, Arial, sans-serif`;
-    context.textAlign = "center";
-    context.textBaseline = "middle";
-    context.fillText(name, center.x, center.y);
-    context.restore();
   });
 
-  const africaLabelX = ((16 + 180) / 360) * width;
-  const africaLabelY = ((90 - 4) / 180) * height;
   context.save();
-  context.fillStyle = "rgba(255,253,246,.92)";
-  context.shadowColor = "rgba(2,26,19,.8)";
-  context.shadowBlur = width / 350;
-  context.font = `800 ${Math.max(15, width / 82)}px Manrope, Arial, sans-serif`;
-  context.textAlign = "center";
-  context.textBaseline = "middle";
-  context.fillText("AFRICA", africaLabelX, africaLabelY);
+  context.globalCompositeOperation = "soft-light";
+  const sheen = context.createLinearGradient(0, 0, width, height);
+  sheen.addColorStop(0, "rgba(255,255,255,.18)");
+  sheen.addColorStop(0.48, "rgba(255,255,255,0)");
+  sheen.addColorStop(1, "rgba(0,0,0,.28)");
+  context.fillStyle = sheen;
+  context.fillRect(0, 0, width, height);
   context.restore();
 
   const texture = new THREE.CanvasTexture(canvas);
@@ -329,27 +220,6 @@ function Atmosphere({ lowPower }: { lowPower: boolean }) {
   );
 }
 
-function OrbitingBeacons({ reduceMotion }: { reduceMotion: boolean }) {
-  const orbit = useRef<THREE.Group>(null);
-
-  useFrame((_, delta) => {
-    if (!orbit.current || reduceMotion) return;
-    orbit.current.rotation.z += delta * 0.09;
-    orbit.current.rotation.y -= delta * 0.045;
-  });
-
-  return (
-    <group ref={orbit} rotation={[0.62, 0.15, 0.1]}>
-      {[0.35, 2.45, 4.55].map((angle, index) => (
-        <mesh key={angle} position={[Math.cos(angle) * 1.88, Math.sin(angle) * 1.88, 0]}>
-          <sphereGeometry args={[index === 1 ? 0.032 : 0.024, 12, 12]} />
-          <meshBasicMaterial color={index === 1 ? "#d8c58d" : "#f6f1e7"} />
-        </mesh>
-      ))}
-    </group>
-  );
-}
-
 function Globe({
   reduceMotion,
   lowPower,
@@ -366,12 +236,43 @@ function Globe({
   const { camera, gl, invalidate } = useThree();
   const cameraTarget = useRef(new THREE.Vector3());
   const cameraGoal = useRef(new THREE.Vector3());
-  const points = useMemo(() => locations.map((location) => pointOnSphere(location.lat, location.lon)), []);
+  const routeLocations = useMemo(() => {
+    const seen = new Set<string>();
+    return destinations.filter((destination) => {
+      const key = `${destination.location.lat.toFixed(3)}:${destination.location.lon.toFixed(3)}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [destinations]);
+  const routePoints = useMemo(
+    () => routeLocations.map((destination) => pointOnSphere(destination.location.lat, destination.location.lon)),
+    [routeLocations],
+  );
+  const routeConnections = useMemo(() => {
+    const seen = new Set<string>();
+    return destinations.slice(1).flatMap((destination, index) => {
+      const previous = destinations[index];
+      const fromKey = `${previous.location.lat.toFixed(3)}:${previous.location.lon.toFixed(3)}`;
+      const toKey = `${destination.location.lat.toFixed(3)}:${destination.location.lon.toFixed(3)}`;
+      const key = [fromKey, toKey].sort().join("→");
+      if (seen.has(key)) return [];
+      seen.add(key);
+      return [{
+        key,
+        from: pointOnSphere(previous.location.lat, previous.location.lon),
+        to: pointOnSphere(destination.location.lat, destination.location.lon),
+      }];
+    });
+  }, [destinations]);
   const earthTexture = useMemo(() => createEarthTexture(lowPower), [lowPower]);
   const stageRotations = useMemo(
     () => destinations.map((destination, index) => ({
       x: THREE.MathUtils.degToRad(destination.location.lat),
-      y: -Math.PI / 2 - THREE.MathUtils.degToRad(destination.location.lon),
+      // One complete revolution is built into every leg. Because each landing
+      // ends on an equivalent 2π orientation, the requested city still faces
+      // the camera and reverse scrolling retraces the same trip exactly.
+      y: -Math.PI / 2 - THREE.MathUtils.degToRad(destination.location.lon) - index * Math.PI * 2,
       z: index % 2 === 0 ? -0.035 : 0.035,
       lift: ((index % 5) - 2) * 0.045,
     })),
@@ -462,7 +363,7 @@ function Globe({
 
     const damping = 1 - Math.exp(-delta * 3.6);
     const cameraDamping = 1 - Math.exp(-delta * 4.25);
-    const journeyView = mode === "journey" ? getJourneyView(progress, lowPower) : null;
+    const journeyView = mode === "journey" ? getJourneyView(progress, lowPower, stageRotations.length) : null;
     manualRotation.current.x = THREE.MathUtils.lerp(
       manualRotation.current.x,
       manualRotation.current.targetX,
@@ -478,15 +379,14 @@ function Globe({
       stage.x +
         manualRotation.current.x -
         pointerY * 0.075 +
-        (journeyView ? Math.sin(journeyView.angle * 0.55) * 0.08 : 0),
+        (journeyView ? Math.sin(journeyView.angle * 0.5) * journeyView.travel * 0.035 : 0),
       damping,
     );
     globeGroup.current.rotation.y = THREE.MathUtils.lerp(
       globeGroup.current.rotation.y,
       stage.y +
         manualRotation.current.y +
-        pointerX * 0.11 +
-        (journeyView ? progress * Math.PI * 2.25 : 0),
+        pointerX * 0.11,
       damping,
     );
     globeGroup.current.rotation.z = THREE.MathUtils.lerp(globeGroup.current.rotation.z, stage.z, damping);
@@ -550,23 +450,28 @@ function Globe({
           <meshBasicMaterial color="#d8ddd8" transparent opacity={0.38} />
         </mesh>
 
-        {points.map((point, index) => (
-          <group key={`${locations[index].lat}-${locations[index].lon}`} position={point}>
+        {routePoints.map((point, index) => {
+          const destination = routeLocations[index];
+          const active = destinations[activeIndex]?.location.code === destination.location.code;
+          const color = destination.location.country.includes("Türkiye") ? "#f4dfaa" : "#e8f4e8";
+          const markerSize = active ? 0.032 : 0.013;
+          return (
+          <group key={`${destination.location.lat}-${destination.location.lon}`} position={point}>
             <mesh>
-              <sphereGeometry args={[index === 0 ? 0.052 : 0.036, 16, 16]} />
-              <meshBasicMaterial color={locations[index].color} />
+              <sphereGeometry args={[markerSize, 16, 16]} />
+              <meshBasicMaterial color={color} />
             </mesh>
-            <mesh scale={2.1}>
-              <sphereGeometry args={[index === 0 ? 0.052 : 0.036, 12, 12]} />
-              <meshBasicMaterial color={locations[index].color} transparent opacity={0.15} />
+            <mesh scale={active ? 1.95 : 1.55}>
+              <sphereGeometry args={[markerSize, 12, 12]} />
+              <meshBasicMaterial color={color} transparent opacity={active ? 0.2 : 0.075} />
             </mesh>
           </group>
-        ))}
-        {points.slice(1).map((point, index) => (
-          <Connection key={`${locations[index + 1].lat}-${locations[index + 1].lon}`} from={points[0]} to={point} />
+          );
+        })}
+        {routeConnections.map((connection) => (
+          <Connection key={connection.key} from={connection.from} to={connection.to} />
         ))}
 
-        <OrbitingBeacons reduceMotion={reduceMotion} />
       </group>
     </group>
   );

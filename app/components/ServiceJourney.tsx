@@ -8,8 +8,13 @@ const GlobeScene = lazy(() =>
 
 type ServiceJourneyProps = { language: Language };
 
-function PageMark({ number, label }: { number: string; label: string }) {
-  return <div className="page-mark"><span>{number}</span><p>{label}</p><i aria-hidden="true" /></div>;
+function PageMark({ number, label, location }: { number: string; label: string; location?: string }) {
+  return (
+    <div className="page-mark">
+      <span>{number}</span><p>{label}</p><i aria-hidden="true" />
+      {location && <em>{location}</em>}
+    </div>
+  );
 }
 
 function CatalogueHeading({ kicker, title }: { kicker: string; title: string }) {
@@ -62,45 +67,75 @@ export function ServiceJourney({ language }: ServiceJourneyProps) {
         import("gsap/ScrollTrigger"),
       ]);
       if (cancelled || !root.current) return;
+      const rootElement = root.current;
       gsap.registerPlugin(ScrollTrigger);
       const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      const chapters = gsap.utils.toArray<HTMLElement>(".journey-chapter", root.current);
+      const chapters = gsap.utils.toArray<HTMLElement>(".journey-chapter", rootElement);
+      const clamp01 = (value: number) => Math.min(1, Math.max(0, value));
+      const smoothstep = (value: number) => {
+        const clamped = clamp01(value);
+        return clamped * clamped * (3 - 2 * clamped);
+      };
 
       context = gsap.context(() => {
-        chapters.forEach((chapter, index) => {
-          ScrollTrigger.create({
-            trigger: chapter,
-            start: "top 55%",
-            end: "bottom 45%",
-            onEnter: () => setActiveChapter(index),
-            onEnterBack: () => setActiveChapter(index),
-            onUpdate: (self) => {
-              globeProgress.current = Math.min(1, (index + self.progress) / chapters.length);
-            },
+        let chapterCenters: number[] = [];
+        const measureCenters = () => {
+          chapterCenters = chapters.map((chapter) => {
+            const bounds = chapter.getBoundingClientRect();
+            return bounds.top + window.scrollY + bounds.height / 2 - window.innerHeight / 2;
           });
+        };
+        const updateJourney = () => {
+          if (chapterCenters.length < 2) return;
+          const currentScroll = window.scrollY;
+          if (currentScroll <= chapterCenters[0]) {
+            globeProgress.current = 0;
+            setActiveChapter(0);
+            return;
+          }
+          const lastIndex = chapterCenters.length - 1;
+          if (currentScroll >= chapterCenters[lastIndex]) {
+            globeProgress.current = 1;
+            setActiveChapter(lastIndex);
+            return;
+          }
 
+          const segment = Math.max(0, chapterCenters.findIndex((center, index) => index < lastIndex && currentScroll >= center && currentScroll < chapterCenters[index + 1]));
+          const start = chapterCenters[segment];
+          const end = chapterCenters[segment + 1];
+          const local = clamp01((currentScroll - start) / Math.max(1, end - start));
+          const travel = smoothstep((local - .26) / .48);
+          globeProgress.current = (segment + travel) / lastIndex;
+          setActiveChapter(local < .5 ? segment : segment + 1);
+        };
+
+        ScrollTrigger.create({
+          trigger: rootElement,
+          start: "top top",
+          end: "bottom bottom",
+          onRefresh: () => { measureCenters(); updateJourney(); },
+          onUpdate: updateJourney,
+        });
+
+        chapters.forEach((chapter, index) => {
           if (reduced || index === 0) return;
           const panel = chapter.querySelector<HTMLElement>("[data-orbit-content]");
           if (!panel) return;
           const fromLeft = chapter.classList.contains("chapter-left");
-          gsap.fromTo(panel,
-            { opacity: .32, x: fromLeft ? -44 : 44, y: 44, scale: .975 },
-            { opacity: 1, x: 0, y: 0, scale: 1, ease: "power3.out", scrollTrigger: { trigger: chapter, start: "top 88%", end: "top 40%", scrub: .8 } },
-          );
+          gsap.timeline({ scrollTrigger: { trigger: chapter, start: "top bottom", end: "bottom top", scrub: 1 } })
+            .fromTo(panel, { opacity: 0, x: fromLeft ? -54 : 54, y: 54, scale: .965 }, { opacity: 1, x: 0, y: 0, scale: 1, duration: .22, ease: "power3.out" })
+            .to(panel, { opacity: 1, x: 0, y: 0, scale: 1, duration: .56 })
+            .to(panel, { opacity: 0, x: fromLeft ? 42 : -42, y: -54, scale: .97, duration: .22, ease: "power2.in" });
         });
 
         if (!reduced) {
           gsap.timeline({ scrollTrigger: { trigger: ".chapter-hero", start: "top top", end: "bottom bottom", scrub: 1 } })
-            .fromTo(".journey-trade-model", { scale: .74, xPercent: 7, yPercent: 7, opacity: 1 }, { scale: 1.08, xPercent: 0, yPercent: 0, duration: .24, ease: "none" })
-            .to("[data-hero-copy]", { opacity: 0, y: -70, duration: .13 }, .13)
-            .to(".journey-globe", { opacity: 1, scale: 1, duration: .2, ease: "power2.out" }, .22)
-            .to(".journey-trade-model", { scale: 2.35, xPercent: -13, yPercent: 3, duration: .29, ease: "power1.in" }, .25)
-            .to(".journey-trade-model", { scale: 6.4, xPercent: -33, yPercent: -2, opacity: 0, filter: "blur(10px)", duration: .34, ease: "power2.in" }, .53)
-            .fromTo(".journey-entry-copy", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: .14 }, .66)
-            .to(".journey-entry-copy", { opacity: 0, y: -24, duration: .12 }, .86);
+            .to("[data-hero-copy]", { opacity: 0, y: -70, duration: .22 }, .08)
+            .fromTo(".journey-entry-copy", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: .18 }, .38)
+            .to(".journey-entry-copy", { opacity: 0, y: -24, duration: .16 }, .72);
         }
 
-        gsap.utils.toArray<HTMLElement>("[data-reveal]", root.current).forEach((element) => {
+        gsap.utils.toArray<HTMLElement>("[data-reveal]", rootElement).forEach((element) => {
           if (reduced) return;
           gsap.fromTo(element, { opacity: .35, y: 34 }, { opacity: 1, y: 0, duration: .75, ease: "power3.out", scrollTrigger: { trigger: element, start: "top 91%", once: true } });
         });
@@ -121,7 +156,6 @@ export function ServiceJourney({ language }: ServiceJourneyProps) {
             <GlobeScene destinations={destinations} activeIndex={activeChapter} progressRef={globeProgress} mode="journey" />
           </Suspense>
         </div>
-        <img className="journey-trade-model" src="/images/catalogue/turkanor-trade-layers-v1.webp" alt="" width="1536" height="1024" />
         <div className="journey-vignette" />
         <p className="journey-entry-copy">{copy.bridge.signature}</p>
       </div>
@@ -140,7 +174,7 @@ export function ServiceJourney({ language }: ServiceJourneyProps) {
 
         <article id="a-propos" className="journey-chapter chapter-left" data-chapter-index="1">
           <section className="journey-panel paper-panel about-page" data-orbit-content>
-            <PageMark number="02" label={copy.about.title} />
+            <PageMark number="02" label={copy.about.title} location={`${destinations[1].location.city} · ${destinations[1].location.country}`} />
             <div className="about-editorial">
               <div><CatalogueHeading kicker="02" title={copy.about.title} />{copy.about.paragraphs.map((paragraph, index) => <p className={index === 0 ? "about-lead" : ""} key={paragraph}>{paragraph}</p>)}</div>
               <aside className="domains-block"><h3>{copy.about.domainsTitle}</h3><ol>{copy.about.domains.map((domain) => <li key={domain}>{domain}</li>)}</ol></aside>
@@ -150,7 +184,7 @@ export function ServiceJourney({ language }: ServiceJourneyProps) {
 
         <article id="direction" className="journey-chapter chapter-right" data-chapter-index="2">
           <section className="journey-panel paper-panel manager-page" data-orbit-content>
-            <PageMark number="03" label={copy.manager.title} />
+            <PageMark number="03" label={copy.manager.title} location={`${destinations[2].location.city} · ${destinations[2].location.country}`} />
             <CatalogueHeading kicker="03" title={copy.manager.title} />
             <div className="manager-layout"><div className="manager-signature"><span>03</span><strong>{copy.manager.name}</strong><small>TURKANOR Corporation</small></div><blockquote>{copy.manager.quote}</blockquote></div>
             <div className="manager-solutions"><h3>{copy.manager.solutionsTitle}</h3>{copy.manager.solutions.map((solution) => <article key={solution.title}><strong>{solution.title}</strong><p>{solution.description}</p></article>)}</div>
@@ -159,7 +193,7 @@ export function ServiceJourney({ language }: ServiceJourneyProps) {
 
         <article id="services" className="journey-chapter chapter-left chapter-wide" data-chapter-index="3">
           <section className="journey-panel wide-panel paper-panel solutions-page" data-orbit-content>
-            <PageMark number="04" label={copy.solutions.sectionTitle} />
+            <PageMark number="04" label={copy.solutions.sectionTitle} location={`${destinations[3].location.city} · ${destinations[3].location.country}`} />
             <CatalogueHeading kicker={copy.solutions.sectionTitle} title={copy.solutions.title} />
             <p className="section-intro">{copy.solutions.intro}</p>
             <ServiceRows items={copy.solutions.items.slice(0, 4)} start={1} />
@@ -168,7 +202,7 @@ export function ServiceJourney({ language }: ServiceJourneyProps) {
 
         <article className="journey-chapter chapter-right chapter-wide" data-chapter-index="4">
           <section className="journey-panel wide-panel paper-panel solutions-continuation" data-orbit-content>
-            <PageMark number="05" label={copy.solutions.sectionTitle} />
+            <PageMark number="05" label={copy.solutions.sectionTitle} location={`${destinations[4].location.city} · ${destinations[4].location.country}`} />
             <ServiceRows items={copy.solutions.items.slice(4)} start={5} />
             <figure className="trade-development-image"><img src="/images/catalogue/business-development.webp" alt="" width="1850" height="1800" loading="lazy" decoding="async" /></figure>
           </section>
@@ -176,7 +210,7 @@ export function ServiceJourney({ language }: ServiceJourneyProps) {
 
         <article id="secteurs" className="journey-chapter chapter-left chapter-wide" data-chapter-index="5">
           <section className="journey-panel wide-panel green-panel sectors-page" data-orbit-content>
-            <PageMark number="06" label={copy.sectors.sectionTitle} />
+            <PageMark number="06" label={copy.sectors.sectionTitle} location={`${destinations[5].location.city} · ${destinations[5].location.country}`} />
             <CatalogueHeading kicker={copy.sectors.sectionTitle} title={copy.sectors.title} />
             <div className="sectors-layout"><div className="sectors-list">{copy.sectors.items.map((sector, index) => <article key={sector.title}><span>{String(index + 1).padStart(2, "0")}</span><h3>{sector.title}</h3><p>{sector.details.join(" · ")}</p></article>)}</div><img src="/images/catalogue/sectors-neutral.webp" alt="" width="700" height="1500" loading="lazy" decoding="async" /></div>
             <p className="sector-footnote">{copy.sectors.footnote}</p>
@@ -185,7 +219,7 @@ export function ServiceJourney({ language }: ServiceJourneyProps) {
 
         <article id="sourcing" className="journey-chapter chapter-right chapter-wide" data-chapter-index="6">
           <section className="journey-panel wide-panel paper-panel sourcing-page" data-orbit-content>
-            <PageMark number="07" label={copy.sourcing.sectionTitle} />
+            <PageMark number="07" label={copy.sourcing.sectionTitle} location={`${destinations[6].location.city} · ${destinations[6].location.country}`} />
             <CatalogueHeading kicker={copy.sourcing.sectionTitle} title={copy.sourcing.title} />
             <p className="section-intro">{copy.sourcing.intro}</p>
             <SourcingSteps steps={copy.sourcing.steps.slice(0, 3)} start={1} />
@@ -194,7 +228,7 @@ export function ServiceJourney({ language }: ServiceJourneyProps) {
 
         <article className="journey-chapter chapter-left chapter-wide" data-chapter-index="7">
           <section className="journey-panel wide-panel green-panel sourcing-page sourcing-dark" data-orbit-content>
-            <PageMark number="08" label={copy.sourcing.sectionTitle} />
+            <PageMark number="08" label={copy.sourcing.sectionTitle} location={`${destinations[7].location.city} · ${destinations[7].location.country}`} />
             <CatalogueHeading kicker={copy.sourcing.sectionTitle} title={copy.sourcing.sectionTitle} />
             <SourcingSteps steps={copy.sourcing.steps.slice(3)} start={4} />
             <p className="sourcing-closing">{copy.sourcing.closing}</p>
@@ -203,7 +237,7 @@ export function ServiceJourney({ language }: ServiceJourneyProps) {
 
         <article id="turkiye" className="journey-chapter chapter-right" data-chapter-index="8">
           <section className="journey-panel paper-panel turkiye-page" data-orbit-content>
-            <PageMark number="09" label={copy.turkiye.sectionTitle} />
+            <PageMark number="09" label={copy.turkiye.sectionTitle} location={`${destinations[8].location.city} · ${destinations[8].location.country}`} />
             <CatalogueHeading kicker={copy.turkiye.sectionTitle} title={copy.turkiye.title} />
             <div className="turkiye-services">{copy.turkiye.items.map((service, index) => <article key={service.title}><img src={service.image} alt="" width="460" height="460" loading="lazy" decoding="async" /><div><span>{String(index + 1).padStart(2, "0")}</span><h3>{service.title}</h3><p>{service.details.join(" · ")}</p></div></article>)}</div>
           </section>
@@ -211,7 +245,7 @@ export function ServiceJourney({ language }: ServiceJourneyProps) {
 
         <article id="pont" className="journey-chapter chapter-left" data-chapter-index="9">
           <section className="journey-panel green-panel bridge-page" data-orbit-content>
-            <PageMark number="10" label={copy.bridge.sectionTitle} />
+            <PageMark number="10" label={copy.bridge.sectionTitle} location={`${destinations[9].location.city} · ${destinations[9].location.country}`} />
             <CatalogueHeading kicker={copy.bridge.sectionTitle} title={copy.bridge.title} />
             <div className="bridge-markets"><article><h3>{copy.bridge.turkiyeTitle}</h3><ul>{copy.bridge.turkiyeItems.map((item) => <li key={item}>{item}</li>)}</ul></article><i aria-hidden="true"><span>TR</span><b>↔</b><span>AF</span></i><article><h3>{copy.bridge.africaTitle}</h3><ul>{copy.bridge.africaItems.map((item) => <li key={item}>{item}</li>)}</ul></article></div>
             <p className="bridge-body">{copy.bridge.body}</p>
@@ -221,12 +255,12 @@ export function ServiceJourney({ language }: ServiceJourneyProps) {
         </article>
 
         <article id="ensemble" className="journey-chapter chapter-closing" data-chapter-index="10" aria-label={copy.closing.title}>
-          <div data-orbit-content><PageMark number="11" label={copy.closing.title} /><h2>{copy.closing.title}</h2></div>
+          <div data-orbit-content><PageMark number="11" label={copy.closing.title} location={`${destinations[10].location.city} · ${destinations[10].location.country}`} /><h2>{copy.closing.title}</h2></div>
         </article>
 
         <article id="contact" className="journey-chapter chapter-wide chapter-contact" data-chapter-index="11">
           <section className="journey-panel contact-panel paper-panel contact-page" data-orbit-content>
-            <PageMark number="12" label={copy.contact.cta} />
+            <PageMark number="12" label={copy.contact.cta} location={`${destinations[11].location.city} · ${destinations[11].location.country}`} />
             <div className="contact-brandline"><strong>TURKANOR CORPORATION</strong><span>{copy.contact.bridge}</span></div>
             <p className="contact-ecosystem">{copy.contact.ecosystem.join(" · ")}</p>
             <div className="contact-layout">
