@@ -15,10 +15,9 @@ export function SiteHeader({ language }: { language: Language }) {
     [copy.navigation.about, "#a-propos"],
     [copy.navigation.services, "#services"],
     [copy.navigation.sectors, "#secteurs"],
+    [copy.navigation.sourcing, "#sourcing"],
     [copy.navigation.turkiye, "#turkiye"],
-    [copy.navigation.africa, "#afrique"],
-    [copy.navigation.projects, "#projets"],
-    [copy.navigation.partners, "#partenaires"],
+    [copy.navigation.bridge, "#pont"],
     [copy.navigation.contact, "#contact"],
   ] as const;
 

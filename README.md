@@ -7,13 +7,13 @@ services between Türkiye, Africa and the rest of the world.
 ## Experience
 
 - Editorial, responsive visual system built specifically for TURKANOR
-- Ten-service scroll journey with a persistent desktop index
-- Interactive 3D Türkiye-to-West-Africa globe
+- Continuous scroll-directed camera journey through a TURKANOR trade world and around a 3D Türkiye-to-Africa globe
+- Catalogue-faithful chapter order and complete source content without a redundant website contents page
 - GSAP scroll reveals and Lenis smooth scrolling
 - Accessible reduced-motion mode, keyboard focus treatment and mobile navigation
 - Server-rendered and prerendered French, English and Turkish content with structured organization data
 - Direct WhatsApp, telephone and email conversion paths
-- Optimized WebP imagery and responsive performance safeguards
+- Catalogue-derived WebP imagery, an original transparent trade-world asset and responsive performance safeguards
 
 ## Stack
 

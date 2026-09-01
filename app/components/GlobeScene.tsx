@@ -1,5 +1,5 @@
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Html, Line, Stars } from "@react-three/drei";
+import { Line, Stars } from "@react-three/drei";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import type { GlobeDestination } from "~/data/worldContent";
@@ -12,8 +12,6 @@ type GlobeSceneProps = {
   scrollProgress?: number;
   /** Prefer this for animation: ScrollTrigger can update it without React renders. */
   progressRef?: { current: number };
-  /** Selecting a pin lets the page scroll its matching service into view. */
-  onSelectIndex?: (index: number) => void;
   /** Every editorial chapter is a real destination on the globe. */
   destinations: GlobeDestination[];
 };
@@ -99,6 +97,42 @@ function clamp01(value: number) {
 function smoothstep(value: number) {
   const t = clamp01(value);
   return t * t * (3 - 2 * t);
+}
+
+function getJourneyView(progress: number, lowPower: boolean) {
+  const p = clamp01(progress);
+  const entrance = smoothstep(p / 0.16);
+  const departure = smoothstep((p - 0.88) / 0.12);
+  const orbit = smoothstep(p);
+  const turns = lowPower ? 1.05 : 1.35;
+  const angle = orbit * Math.PI * 2 * turns;
+  const surfacePass = lowPower
+    ? 3.55 + Math.sin(p * Math.PI * 5 + 0.4) * 0.12
+    : 2.68 + Math.sin(p * Math.PI * 5 + 0.4) * 0.2;
+  const approachRadius = THREE.MathUtils.lerp(lowPower ? 6.05 : 5.7, surfacePass, entrance);
+  const radius = THREE.MathUtils.lerp(approachRadius, lowPower ? 5.3 : 4.7, departure);
+  const height = (lowPower ? 0.3 : 0.62) * Math.sin(angle * 0.72) + (lowPower ? 0.12 : 0.08);
+  const closeScale = lowPower ? 1 : 1.12;
+  const scale = THREE.MathUtils.lerp(
+    THREE.MathUtils.lerp(lowPower ? 0.88 : 0.9, closeScale, entrance),
+    lowPower ? 0.9 : 0.94,
+    departure,
+  );
+  const closeFov = lowPower ? 45 : 38;
+  const fov = THREE.MathUtils.lerp(
+    THREE.MathUtils.lerp(lowPower ? 48 : 44, closeFov, entrance),
+    lowPower ? 46 : 42,
+    departure,
+  );
+
+  return {
+    angle,
+    fov,
+    x: Math.sin(angle) * radius,
+    y: height,
+    z: Math.cos(angle) * radius,
+    scale,
+  };
 }
 
 function getStage(
@@ -316,110 +350,12 @@ function OrbitingBeacons({ reduceMotion }: { reduceMotion: boolean }) {
   );
 }
 
-function ServiceHotspots({
-  destinations,
-  activeIndex,
-  onSelectIndex,
-  lowPower,
-}: {
-  destinations: GlobeDestination[];
-  activeIndex: number;
-  onSelectIndex: (index: number) => void;
-  lowPower: boolean;
-}) {
-  const positions = useMemo(
-    () => destinations.map((destination, index) => pointOnSphere(destination.location.lat, destination.location.lon, 1.65 + (index % 3) * 0.018)),
-    [destinations],
-  );
-
-  return (
-    <>
-      {positions.map((position, index) => {
-        const destination = destinations[index];
-        const active = index === activeIndex;
-        const next = index === Math.min(activeIndex + 1, destinations.length - 1);
-        const showLabel = active || next;
-        return (
-          <group key={`${destination.location.city}-${destination.id}`} position={position}>
-            <mesh
-              scale={active ? 1.35 : 1}
-              onClick={(event) => {
-                event.stopPropagation();
-                onSelectIndex(index);
-              }}
-            >
-              <sphereGeometry args={[active ? 0.046 : 0.024, 16, 16]} />
-              <meshBasicMaterial color={active ? "#d8c58d" : "#fffdf6"} />
-            </mesh>
-            <mesh
-              onClick={(event) => {
-                event.stopPropagation();
-                onSelectIndex(index);
-              }}
-            >
-              <sphereGeometry args={[lowPower ? 0.09 : 0.065, 10, 10]} />
-              <meshBasicMaterial transparent opacity={0} depthWrite={false} />
-            </mesh>
-            {showLabel && (
-              <Html
-                center
-                occlude
-                zIndexRange={[30, 0]}
-                style={{ pointerEvents: "auto", userSelect: "none" }}
-              >
-                <button
-                  type="button"
-                  title={`${destination.label} — ${destination.location.city}`}
-                  aria-label={`${destination.number}, ${destination.label}, ${destination.location.city}`}
-                  aria-pressed={active}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    onSelectIndex(index);
-                  }}
-                  style={{
-                    alignItems: "center",
-                    background: active ? "#d8c58d" : "rgba(3, 38, 29, 0.9)",
-                    border: active ? "1px solid rgba(255,255,255,.85)" : "1px solid rgba(255,255,255,.4)",
-                    borderRadius: 999,
-                    boxShadow: active
-                      ? "0 10px 28px rgba(0,0,0,.32), 0 0 0 5px rgba(216,197,141,.14)"
-                      : "0 6px 18px rgba(0,0,0,.22)",
-                    color: active ? "#08281f" : "#fffdf6",
-                    cursor: "pointer",
-                    display: "inline-flex",
-                    fontFamily: "Manrope, sans-serif",
-                    fontSize: lowPower ? 9 : 8,
-                    fontWeight: 800,
-                    letterSpacing: "0.04em",
-                    lineHeight: 1,
-                    justifyContent: "center",
-                    minHeight: active ? (lowPower ? 38 : 30) : lowPower ? 32 : 22,
-                    minWidth: active ? (lowPower ? 38 : 30) : lowPower ? 32 : 22,
-                    opacity: active ? 1 : 0.84,
-                    padding: 0,
-                    transform: `translateY(-${active ? 17 : 11}px)`,
-                    transition: "background .3s ease, opacity .3s ease, transform .3s ease, box-shadow .3s ease",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  <span aria-hidden="true">{destination.number}</span>
-                </button>
-              </Html>
-            )}
-          </group>
-        );
-      })}
-    </>
-  );
-}
-
 function Globe({
   reduceMotion,
   lowPower,
   activeIndex,
   scrollProgress,
   progressRef,
-  onSelectIndex,
   destinations,
   mode = "hero",
 }: Required<Pick<GlobeSceneProps, "activeIndex">> &
@@ -427,7 +363,9 @@ function Globe({
   const stageGroup = useRef<THREE.Group>(null);
   const globeGroup = useRef<THREE.Group>(null);
   const manualRotation = useRef({ x: 0, y: 0, targetX: 0, targetY: 0 });
-  const { gl, invalidate } = useThree();
+  const { camera, gl, invalidate } = useThree();
+  const cameraTarget = useRef(new THREE.Vector3());
+  const cameraGoal = useRef(new THREE.Vector3());
   const points = useMemo(() => locations.map((location) => pointOnSphere(location.lat, location.lon)), []);
   const earthTexture = useMemo(() => createEarthTexture(lowPower), [lowPower]);
   const stageRotations = useMemo(
@@ -509,10 +447,22 @@ function Globe({
     if (reduceMotion) {
       globeGroup.current.rotation.set(stage.x, stage.y, stage.z);
       stageGroup.current.position.y = stage.lift;
+      stageGroup.current.position.x = 0;
+      stageGroup.current.scale.setScalar(mode === "journey" ? (lowPower ? 0.88 : 0.92) : 1);
+      if (mode === "journey") {
+        camera.position.set(0, lowPower ? 0.12 : 0.08, lowPower ? 6.05 : 5.7);
+        camera.lookAt(0, 0, 0);
+        if (camera instanceof THREE.PerspectiveCamera) {
+          camera.fov = lowPower ? 48 : 44;
+          camera.updateProjectionMatrix();
+        }
+      }
       return;
     }
 
     const damping = 1 - Math.exp(-delta * 3.6);
+    const cameraDamping = 1 - Math.exp(-delta * 4.25);
+    const journeyView = mode === "journey" ? getJourneyView(progress, lowPower) : null;
     manualRotation.current.x = THREE.MathUtils.lerp(
       manualRotation.current.x,
       manualRotation.current.targetX,
@@ -525,12 +475,18 @@ function Globe({
     );
     globeGroup.current.rotation.x = THREE.MathUtils.lerp(
       globeGroup.current.rotation.x,
-      stage.x + manualRotation.current.x - pointerY * 0.075,
+      stage.x +
+        manualRotation.current.x -
+        pointerY * 0.075 +
+        (journeyView ? Math.sin(journeyView.angle * 0.55) * 0.08 : 0),
       damping,
     );
     globeGroup.current.rotation.y = THREE.MathUtils.lerp(
       globeGroup.current.rotation.y,
-      stage.y + manualRotation.current.y + pointerX * 0.11,
+      stage.y +
+        manualRotation.current.y +
+        pointerX * 0.11 +
+        (journeyView ? progress * Math.PI * 2.25 : 0),
       damping,
     );
     globeGroup.current.rotation.z = THREE.MathUtils.lerp(globeGroup.current.rotation.z, stage.z, damping);
@@ -545,7 +501,27 @@ function Globe({
       damping,
     );
     const pulse = 1 + Math.sin(progress * Math.PI * 9) * 0.012;
-    stageGroup.current.scale.setScalar(THREE.MathUtils.lerp(stageGroup.current.scale.x, pulse, damping));
+    const targetScale = journeyView
+      ? journeyView.scale + Math.sin(progress * Math.PI * 7) * (lowPower ? 0.008 : 0.018)
+      : pulse;
+    stageGroup.current.scale.setScalar(
+      THREE.MathUtils.lerp(stageGroup.current.scale.x, targetScale, damping),
+    );
+
+    if (journeyView) {
+      cameraGoal.current.set(journeyView.x, journeyView.y, journeyView.z);
+      camera.position.lerp(cameraGoal.current, cameraDamping);
+      cameraGoal.current.set(0, stage.lift * 0.42 - pointerY * 0.025, 0);
+      cameraTarget.current.lerp(cameraGoal.current, cameraDamping);
+      camera.lookAt(cameraTarget.current);
+      if (camera instanceof THREE.PerspectiveCamera) {
+        const nextFov = THREE.MathUtils.lerp(camera.fov, journeyView.fov, cameraDamping);
+        if (Math.abs(nextFov - camera.fov) > 0.001) {
+          camera.fov = nextFov;
+          camera.updateProjectionMatrix();
+        }
+      }
+    }
   });
 
   return (
@@ -591,14 +567,6 @@ function Globe({
         ))}
 
         <OrbitingBeacons reduceMotion={reduceMotion} />
-        {mode === "journey" && (
-          <ServiceHotspots
-            destinations={destinations}
-            activeIndex={activeIndex}
-            onSelectIndex={onSelectIndex ?? (() => undefined)}
-            lowPower={lowPower}
-          />
-        )}
       </group>
     </group>
   );
@@ -608,12 +576,10 @@ export function GlobeScene({
   activeIndex = 0,
   scrollProgress,
   progressRef,
-  onSelectIndex,
   destinations,
   mode = "hero",
 }: GlobeSceneProps) {
   const container = useRef<HTMLDivElement>(null);
-  const [selectedIndex, setSelectedIndex] = useState(activeIndex);
   const [mounted, setMounted] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
   const [lowPower, setLowPower] = useState(false);
@@ -646,13 +612,6 @@ export function GlobeScene({
     return () => observer.disconnect();
   }, [mounted]);
 
-  useEffect(() => setSelectedIndex(activeIndex), [activeIndex]);
-
-  const selectIndex = (index: number) => {
-    setSelectedIndex(index);
-    onSelectIndex?.(index);
-  };
-
   if (!mounted) return <div className="globe-fallback" aria-hidden="true" />;
 
   return (
@@ -666,7 +625,10 @@ export function GlobeScene({
       <Canvas
         dpr={lowPower ? [1, 1.15] : [1, 1.6]}
         frameloop={!visible || reduceMotion ? "demand" : "always"}
-        camera={{ position: [0, 0.08, 5.15], fov: 41 }}
+        camera={{
+          position: [0, 0.08, mode === "journey" ? 5.7 : 5.15],
+          fov: mode === "journey" ? 44 : 41,
+        }}
         gl={{
           antialias: !lowPower,
           alpha: true,
@@ -683,10 +645,9 @@ export function GlobeScene({
         <Globe
           reduceMotion={reduceMotion}
           lowPower={lowPower}
-          activeIndex={Math.max(0, Math.min(destinations.length - 1, selectedIndex))}
+          activeIndex={Math.max(0, Math.min(destinations.length - 1, activeIndex))}
           scrollProgress={scrollProgress}
           progressRef={progressRef}
-          onSelectIndex={selectIndex}
           destinations={destinations}
           mode={mode}
         />
