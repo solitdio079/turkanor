@@ -8,6 +8,8 @@ services between Türkiye, Africa and the rest of the world.
 
 - Editorial, responsive visual system built specifically for TURKANOR
 - Continuous, reversible scroll journey around a realistic 3D globe, landing on real Türkiye and West Africa locations between chapters
+- Full-screen pinned chapters that expand from the globe, then choreograph headings, copy, imagery and service details as separate scroll beats
+- Selectable route points that carry visitors directly into their matching chapter
 - Catalogue-faithful chapter order and complete source content without a redundant website contents page
 - GSAP scroll reveals and Lenis smooth scrolling
 - Accessible reduced-motion mode, keyboard focus treatment and mobile navigation

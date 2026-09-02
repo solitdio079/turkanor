@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { Link } from "react-router";
 import { content, type Language } from "~/data/worldContent";
 
@@ -16,6 +16,26 @@ export function SiteHeader({ language }: { language: Language }) {
     [copy.navigation.bridge, "#pont"],
     [copy.navigation.contact, "#contact"],
   ] as const;
+
+  const navigateFromMenu = (event: MouseEvent<HTMLAnchorElement>, href: string) => {
+    const target = document.querySelector<HTMLElement>(href);
+    if (!target) return;
+    event.preventDefault();
+    setOpen(false);
+    if (window.location.hash !== href) window.history.pushState(null, "", href);
+
+    // Wait for the fixed mobile menu to release the page before beginning the
+    // globe journey. A native anchor jump can otherwise land halfway inside a
+    // pinned scene while body scrolling is still locked.
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const refreshedTarget = document.querySelector<HTMLElement>(href);
+      if (!refreshedTarget) return;
+      window.scrollTo({
+        top: refreshedTarget.getBoundingClientRect().top + window.scrollY,
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+      });
+    }));
+  };
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -105,7 +125,7 @@ export function SiteHeader({ language }: { language: Language }) {
       >
         <p>{copy.navigation.menu}</p>
         {links.map(([label, href], index) => (
-          <a key={href} href={href} onClick={() => setOpen(false)}>
+          <a key={href} href={href} onClick={(event) => navigateFromMenu(event, href)}>
             <span>{String(index + 1).padStart(2, "0")}</span>{label}
           </a>
         ))}

@@ -368,23 +368,18 @@ img { display: block; max-width: 100%; }
 .journey-globe .globe-fallback { position: absolute; inset: 22%; border: 1px solid rgba(255,255,255,.16); border-radius: 50%; background: radial-gradient(circle at 35% 25%, #2a785a, #073427 48%, #031a13 78%); box-shadow: 0 0 7rem rgba(26,133,92,.28); }
 .journey-vignette { position: absolute; z-index: 4; inset: 0; pointer-events: none; background: linear-gradient(90deg, rgba(2,10,6,.94) 0 12%, rgba(2,10,6,.74) 28%, rgba(2,10,6,.2) 49%, transparent 68%), linear-gradient(180deg, rgba(2,10,6,.12) 55%, rgba(2,10,6,.68)); }
 .journey-entry-copy { position: absolute; z-index: 5; left: 50%; bottom: 9vh; width: min(88vw, 52rem); margin: 0; opacity: 0; transform: translateX(-50%); color: rgba(255,255,255,.82); font-size: clamp(.85rem, 1.45vw, 1.35rem); font-weight: 650; letter-spacing: .11em; line-height: 1.25; text-align: center; text-transform: uppercase; }
-.journey-chapters { position: relative; z-index: 3; margin-top: -100svh; }
-.journey-chapter { position: relative; min-height: 118svh; display: flex; align-items: center; padding: 38svh var(--pad); scroll-margin-top: 4.7rem; pointer-events: none; }
-.journey-chapter.chapter-left { justify-content: flex-start; }
-.journey-chapter.chapter-right { justify-content: flex-end; }
+.journey-chapters { position: relative; z-index: 3; margin-top: -100svh; pointer-events: none; }
+.journey-chapter { position: relative; min-height: 300svh; display: block; padding: 8svh var(--pad); scroll-margin-top: 4.7rem; pointer-events: none; }
+.journey-chapter.chapter-wide { min-height: 360svh; }
 .chapter-hero { min-height: 300svh; align-items: flex-start; padding: 0; }
 .chapter-hero .hero-primary { position: sticky; z-index: 7; top: 0; width: min(41vw, 36rem); height: 100svh; display: flex; flex-direction: column; justify-content: center; margin-left: var(--pad); transform: none; pointer-events: auto; }
 .chapter-hero .hero-primary h1 { font-size: clamp(3.5rem, 6.7vw, 7.35rem); }
-.journey-panel { width: min(50rem, 55vw); padding: clamp(1.6rem, 3.5vw, 3.75rem); overflow: visible; border: 1px solid rgba(255,255,255,.28); border-radius: 0 3.5rem 0 3.5rem; box-shadow: 0 2.5rem 7rem rgba(0,0,0,.28); backdrop-filter: blur(26px) saturate(.9); pointer-events: auto; }
-.chapter-right .journey-panel { border-radius: 3.5rem 0 3.5rem 0; }
-.journey-panel.paper-panel { color: var(--ink); background: rgba(255,254,249,.94); }
-.journey-panel.green-panel { color: white; background: rgba(0,53,31,.93); }
-.journey-panel.wide-panel { width: min(76rem, 82vw); }
-.journey-panel.about-page { width: min(58rem, 61vw); background: rgba(255,254,249,.94); }
-.journey-panel.manager-page { width: min(70rem, 73vw); background: rgba(255,254,249,.95); }
-.journey-panel.turkiye-page { width: min(61rem, 64vw); background: rgba(255,254,249,.95); }
-.journey-panel.bridge-page { width: min(64rem, 67vw); background: rgba(0,53,31,.94); }
-.journey-panel.contact-panel { width: min(78rem, 88vw); background: rgba(255,254,249,.97); }
+.journey-panel { position: sticky; z-index: 6; top: 5.35rem; width: 100%; height: calc(100svh - 6.35rem); padding: 0; overflow: hidden; border: 1px solid rgba(255,255,255,.2); border-radius: 0 1.35rem 0 1.35rem; box-shadow: 0 1.5rem 4.5rem rgba(0,0,0,.24); pointer-events: auto; will-change: clip-path, filter, opacity, transform; }
+.chapter-right .journey-panel { border-radius: 1.35rem 0 1.35rem 0; }
+.journey-panel.paper-panel { color: var(--ink); background: var(--paper-strong); }
+.journey-panel.green-panel { color: white; background: #003b26; }
+.journey-panel.wide-panel, .journey-panel.about-page, .journey-panel.manager-page, .journey-panel.turkiye-page, .journey-panel.bridge-page, .journey-panel.contact-panel { width: 100%; }
+.scene-track { min-height: 100%; padding: clamp(1.6rem, 3.5vw, 3.75rem); will-change: transform; }
 .journey-panel .page-mark { margin-bottom: clamp(2rem, 3vw, 3rem); }
 .page-mark em { margin-left: auto; opacity: .66; font-style: normal; font-weight: 800; white-space: nowrap; }
 .journey-panel .catalogue-heading { margin-bottom: clamp(1.8rem, 3vw, 3rem); }
@@ -406,17 +401,17 @@ img { display: block; max-width: 100%; }
 .green-panel.sectors-page { background: rgba(7,63,41,.94); }
 .green-panel .sectors-layout > img { mix-blend-mode: screen; }
 .green-panel.sourcing-dark { background: rgba(0,53,31,.94); }
-.journey-panel.turkiye-page, .journey-panel.manager-page { background-color: rgba(255,254,249,.95); }
-.journey-panel.bridge-page { background-color: rgba(0,53,31,.94); }
-.chapter-closing { min-height: 130svh; align-items: center; justify-content: center; color: white; }
-.chapter-closing > div { width: min(74rem, 88vw); padding: clamp(2rem, 5vw, 5rem); border: 1px solid rgba(255,255,255,.25); background: rgba(2,34,20,.42); backdrop-filter: blur(18px); pointer-events: auto; }
+.journey-panel.turkiye-page, .journey-panel.manager-page { background-color: var(--paper-strong); }
+.journey-panel.bridge-page { background-color: #003b26; }
+.chapter-closing { min-height: 220svh; color: white; }
+.chapter-closing > div { position: sticky; z-index: 6; top: 5.35rem; width: 100%; height: calc(100svh - 6.35rem); overflow: hidden; border: 1px solid rgba(255,255,255,.22); background: #052b1d; pointer-events: auto; will-change: clip-path, filter, opacity, transform; }
+.closing-track { height: 100%; display: flex; flex-direction: column; justify-content: center; padding: clamp(2rem, 5vw, 5rem); }
 .chapter-closing .page-mark { margin-bottom: 1rem; }
 .chapter-closing h2 { max-width: 62rem; margin: 0; font-family: var(--serif); font-size: clamp(4rem, 9vw, 10rem); line-height: .84; letter-spacing: -.06em; text-transform: uppercase; }
-.chapter-contact { padding-bottom: 18svh; }
+.chapter-contact { min-height: 430svh; padding-bottom: 8svh; }
 
 @media (max-width: 1080px) {
-  .journey-panel, .journey-panel.about-page, .journey-panel.manager-page, .journey-panel.turkiye-page, .journey-panel.bridge-page { width: min(47rem, 76vw); }
-  .journey-panel.wide-panel { width: min(67rem, 90vw); }
+  .journey-panel, .journey-panel.about-page, .journey-panel.manager-page, .journey-panel.turkiye-page, .journey-panel.bridge-page, .journey-panel.wide-panel { width: 100%; }
   .chapter-hero .hero-primary { width: 48vw; }
 }
 
@@ -431,14 +426,16 @@ img { display: block; max-width: 100%; }
   .chapter-hero .hero-service-line { margin-top: .5rem; font-size: .6rem; line-height: 1.55; }
   .chapter-hero .hero-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; width: 100%; margin-top: 1.15rem; }
   .chapter-hero .hero-actions a { gap: .5rem; font-size: .49rem; line-height: 1.35; }
-  .journey-chapter { min-height: 108svh; padding: 32svh .55rem; }
+  .journey-chapter { min-height: 320svh; padding: 7svh .55rem; }
+  .journey-chapter.chapter-wide { min-height: 390svh; }
   .journey-chapter.chapter-hero { min-height: 290svh; align-items: flex-start; padding: 0; }
-  .journey-panel, .journey-panel.about-page, .journey-panel.manager-page, .journey-panel.turkiye-page, .journey-panel.bridge-page, .journey-panel.wide-panel, .journey-panel.contact-panel { width: 100%; padding: 1rem; border-radius: 0 2.2rem 0 2.2rem; backdrop-filter: blur(20px); }
+  .journey-panel, .journey-panel.about-page, .journey-panel.manager-page, .journey-panel.turkiye-page, .journey-panel.bridge-page, .journey-panel.wide-panel, .journey-panel.contact-panel { top: 5.15rem; width: 100%; height: calc(100svh - 5.7rem); padding: 0; border-radius: 0 .9rem 0 .9rem; }
+  .scene-track { padding: 1rem; }
   .journey-panel .page-mark { flex-wrap: wrap; row-gap: .45rem; }
   .journey-panel .page-mark em { flex-basis: 100%; margin-left: 0; font-size: .47rem; letter-spacing: .12em; }
-  .chapter-right .journey-panel { border-radius: 2.2rem 0 2.2rem 0; }
-  .journey-panel.paper-panel, .journey-panel.about-page, .journey-panel.manager-page, .journey-panel.turkiye-page, .journey-panel.contact-panel { background: rgba(255,254,249,.965); }
-  .journey-panel.green-panel, .journey-panel.bridge-page, .journey-panel.sourcing-dark { background: rgba(0,53,31,.955); }
+  .chapter-right .journey-panel { border-radius: .9rem 0 .9rem 0; }
+  .journey-panel.paper-panel, .journey-panel.about-page, .journey-panel.manager-page, .journey-panel.turkiye-page, .journey-panel.contact-panel { background: var(--paper-strong); }
+  .journey-panel.green-panel, .journey-panel.bridge-page, .journey-panel.sourcing-dark { background: #003b26; }
   .journey-panel .catalogue-heading h2 { font-size: clamp(2.45rem, 12vw, 4rem); }
   html[lang="tr"] .journey-panel .catalogue-heading h2 { font-size: clamp(2.25rem, 10.2vw, 3.75rem); }
   .about-page .about-editorial { grid-template-columns: 1fr; }
@@ -446,16 +443,21 @@ img { display: block; max-width: 100%; }
   .manager-page .manager-layout blockquote { min-height: 0; padding: 2.5rem 1.5rem; font-size: 1.75rem; }
   .manager-page .manager-solutions { grid-template-columns: 1fr; }
   .wide-panel .service-row, .solutions-continuation .service-row { grid-template-columns: 2rem 3rem 1fr; }
-  .chapter-closing { min-height: 110svh; padding: 32svh .55rem; }
-  .chapter-closing > div { width: 100%; padding: 1.2rem; }
+  .chapter-closing { min-height: 240svh; padding: 7svh .55rem; }
+  .chapter-closing > div { top: 5.15rem; width: 100%; height: calc(100svh - 5.7rem); }
+  .closing-track { padding: 1.2rem; }
   .chapter-closing h2 { font-size: clamp(2.5rem, 11vw, 5rem); overflow-wrap: break-word; }
   .contact-brandline strong { font-size: 1.35rem; }
   .contact-copy h2 { font-size: clamp(2.8rem, 12vw, 4.8rem); }
-  .chapter-contact { padding-bottom: 12svh; }
+  .chapter-contact { min-height: 520svh; padding-bottom: 7svh; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .journey-globe { opacity: 1 !important; transform: scale(1) !important; }
   .journey-entry-copy { display: none; }
-  [data-orbit-content] { opacity: 1 !important; transform: none !important; }
+  .journey-chapter:not(.chapter-hero) { min-height: 0 !important; padding: 6rem var(--pad) !important; }
+  .journey-chapter.chapter-hero { min-height: 100svh !important; }
+  .journey-panel, .chapter-closing > div { position: relative; top: auto; height: auto; overflow: visible; clip-path: none !important; filter: none !important; }
+  .scene-track { transform: none !important; }
+  [data-orbit-content], [data-scene-item] { opacity: 1 !important; visibility: visible !important; transform: none !important; filter: none !important; }
 }

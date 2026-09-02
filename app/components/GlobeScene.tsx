@@ -16,6 +16,8 @@ type GlobeSceneProps = {
   progressRef?: { current: number };
   /** Every editorial chapter is a real destination on the globe. */
   destinations: GlobeDestination[];
+  /** Opens a chapter when its visible map point is selected. */
+  onDestinationSelect?: (index: number) => void;
 };
 
 type Coordinate = [longitude: number, latitude: number];
@@ -227,6 +229,7 @@ function Globe({
   scrollProgress,
   progressRef,
   destinations,
+  onDestinationSelect,
   mode = "hero",
 }: Required<Pick<GlobeSceneProps, "activeIndex">> &
   Omit<GlobeSceneProps, "activeIndex"> & { reduceMotion: boolean; lowPower: boolean }) {
@@ -455,8 +458,32 @@ function Globe({
           const active = destinations[activeIndex]?.location.code === destination.location.code;
           const color = destination.location.country.includes("Türkiye") ? "#f4dfaa" : "#e8f4e8";
           const markerSize = active ? 0.032 : 0.013;
+          const matchingIndices = destinations.flatMap((item, destinationIndex) =>
+            item.location.code === destination.location.code ? [destinationIndex] : [],
+          );
+          const targetIndex = matchingIndices.reduce(
+            (closest, destinationIndex) =>
+              Math.abs(destinationIndex - activeIndex) < Math.abs(closest - activeIndex)
+                ? destinationIndex
+                : closest,
+            matchingIndices[0] ?? 0,
+          );
           return (
           <group key={`${destination.location.lat}-${destination.location.lon}`} position={point}>
+            <mesh
+              onClick={(event) => {
+                event.stopPropagation();
+                onDestinationSelect?.(targetIndex);
+              }}
+              onPointerOver={(event) => {
+                event.stopPropagation();
+                gl.domElement.style.cursor = "pointer";
+              }}
+              onPointerOut={() => { gl.domElement.style.cursor = "grab"; }}
+            >
+              <sphereGeometry args={[active ? .105 : .07, 12, 12]} />
+              <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+            </mesh>
             <mesh>
               <sphereGeometry args={[markerSize, 16, 16]} />
               <meshBasicMaterial color={color} />
@@ -482,6 +509,7 @@ export function GlobeScene({
   scrollProgress,
   progressRef,
   destinations,
+  onDestinationSelect,
   mode = "hero",
 }: GlobeSceneProps) {
   const container = useRef<HTMLDivElement>(null);
@@ -554,6 +582,7 @@ export function GlobeScene({
           scrollProgress={scrollProgress}
           progressRef={progressRef}
           destinations={destinations}
+          onDestinationSelect={onDestinationSelect}
           mode={mode}
         />
         {!lowPower && (
