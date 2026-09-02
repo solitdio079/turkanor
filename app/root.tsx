@@ -20,7 +20,7 @@ export const links: Route.LinksFunction = () => [
   },
   {
     rel: "stylesheet",
-    href: "https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,ital,wght@6..96,400;6..96,500;6..96,600&family=Manrope:wght@400;500;600;700;800&display=swap",
+    href: "https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Work+Sans:wght@400;500;600;700&display=swap",
   },
   { rel: "icon", href: "/favicon.ico", sizes: "any" },
   { rel: "icon", type: "image/png", href: "/images/turkanor-icon-192.png", sizes: "192x192" },

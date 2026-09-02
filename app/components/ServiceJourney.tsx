@@ -384,17 +384,6 @@ export function ServiceJourney({ language }: ServiceJourneyProps) {
               <p className="contact-ecosystem" data-scene-item>{copy.contact.ecosystem.join(" · ")}</p>
               <div className="contact-layout">
                 <div className="contact-copy"><p data-scene-item>{copy.contact.eyebrow}</p><h2 data-scene-item>{copy.contact.title}</h2><strong data-scene-item>{copy.contact.body}</strong><h3 data-scene-item>{copy.contact.cta}</h3><div className="contact-actions"><a href="https://wa.me/905368935945" target="_blank" rel="noreferrer" data-scene-item>{copy.contact.whatsapp}<span>↗</span></a><a href="mailto:turkanorcorporation@gmail.com" data-scene-item>{copy.contact.email}<span>↗</span></a></div><dl className="contact-list"><div data-scene-item><dt>Türkiye</dt><dd><a href="tel:+905368935945">+90 (536) 893 59 45</a></dd></div><div data-scene-item><dt>Guinée · Conakry</dt><dd><a href="tel:+224629018494">+224 629 018 494</a></dd></div><div data-scene-item><dt>Côte d’Ivoire</dt><dd><a href="tel:+2250719705470">+225 071 970 54 70</a></dd></div><div data-scene-item><dt>Mali</dt><dd><a href="tel:+22383653701">+223 83 65 37 01</a></dd></div></dl></div>
-                <form className="project-form" name="project-request" method="POST" data-netlify="true">
-                  <input type="hidden" name="form-name" value="project-request" />
-                  <label data-scene-item><span>{copy.contact.form.name}</span><input name="name" autoComplete="name" required /></label>
-                  <label data-scene-item><span>{copy.contact.form.company}</span><input name="company" autoComplete="organization" /></label>
-                  <label data-scene-item><span>{copy.contact.form.country}</span><input name="country" autoComplete="country-name" required /></label>
-                  <label data-scene-item><span>{copy.contact.form.phone}</span><input name="phone" type="tel" autoComplete="tel" required /></label>
-                  <label className="form-wide" data-scene-item><span>{copy.contact.form.email}</span><input name="email" type="email" autoComplete="email" required /></label>
-                  <label className="form-wide" data-scene-item><span>{copy.contact.form.service}</span><select name="service" defaultValue="" required><option value="" disabled>{copy.contact.form.choose}</option>{copy.solutions.items.map((service) => <option key={service.id} value={service.id}>{service.title}</option>)}</select></label>
-                  <label className="form-wide" data-scene-item><span>{copy.contact.form.description}</span><textarea name="description" rows={4} required /></label>
-                  <button className="form-submit form-wide" type="submit" data-scene-item>{copy.contact.form.submit}<span>↗</span></button>
-                </form>
               </div>
               <footer className="catalogue-footer"><strong data-scene-item>{copy.contact.footerTitle}</strong><p data-scene-item>{copy.contact.footerLine}</p><span data-scene-item>© {new Date().getFullYear()}</span></footer>
             </div>
